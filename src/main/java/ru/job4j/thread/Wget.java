@@ -21,7 +21,7 @@ public class Wget implements Runnable {
         var countBytes = 0;
         try (InputStream input = new URL(url).openStream()) {
             var startTime = System.currentTimeMillis();
-            for (int bytesRead; (bytesRead = input.read(dataBuffer, 0, dataBuffer.length)) != -1; ) {
+            for (int bytesRead; (bytesRead = input.read(dataBuffer, 0, dataBuffer.length)) != -1;) {
                 countBytes += bytesRead;
                 if (countBytes >= speed) {
                     var endTime = System.currentTimeMillis() - startTime;
