@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -73,5 +74,35 @@ class SimpleBlockingQueueTest {
         secondProducer.join();
         consumer.join();
         assertThat(list).contains(1, 1, 2, 2);
+    }
+
+    @Test
+    void checkWorkTransferElementsFromProducerToConsumer() throws InterruptedException {
+        CopyOnWriteArrayList<Integer> buffer = new CopyOnWriteArrayList<>();
+        SimpleBlockingQueue<Integer> queue = new SimpleBlockingQueue<>(10);
+        Thread producer = new Thread(() -> {
+            for (int i = 1; i <= 5; i++) {
+                try {
+                    queue.offer(i);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        Thread consumer = new Thread(() -> {
+            while (!queue.isEmpty() || !Thread.currentThread().isInterrupted()) {
+                try {
+                    buffer.add(queue.poll());
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        });
+        producer.start();
+        consumer.start();
+        producer.join();
+        consumer.interrupt();
+        consumer.join();
+        assertThat(buffer).containsExactly(1, 2, 3, 4, 5);
     }
 }
